@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/reporte-asistencia.css') }}">
+<title>Empleado</title>
+<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js"
+  integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+  crossorigin="anonymous">
+  </script>
+</head>
+<body>
+
+  <div class="ventana">
+    <div class="header">Reporte Asistencia
+      <button class="btn-cerrar" onclick="cerrarVentana()">X</button>
+    </div>
+    <div class="content-botones">
+        <!-- Botón para Excel -->
+        <button type="button" class="btn-menu"> 
+            <img src="{{ url_for('static', filename='iconos/Excel.png') }}" alt="Excel"> 
+            <span>Excel</span>
+        </button> 
+    
+        <!-- Botón para PDF -->
+        <button type="button" class="btn-menu"> 
+            <img src="{{ url_for('static', filename='iconos/PDF.png') }}" alt="PDF"> 
+            <span>PDF</span>
+        </button>
+    </div>
+
+
+
+<script>
+    
+    
+    function cerrarVentana() {
+      var frame = $(".ventana")
+      frame.hide()
+    }
+    
+  </script>
+
+
+
+
+</body>
+</html>

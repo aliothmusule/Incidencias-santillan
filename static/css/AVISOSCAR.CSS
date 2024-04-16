@@ -1,0 +1,48 @@
+.frameprincipal{
+    border-radius: 15px;
+      margin: 30px 30px 30px 30px;
+      border: 2px solid black;
+      width: 1060px;
+    height: 525px;
+    background-color: #d3d3d3;
+  }
+  .avisoframe{
+    position: absolute;
+    transform: translate(-35%, -37%);
+    top: 50%;
+    left: 50%;
+    width: 850px;
+    height: 430px;
+    border-radius: 10px;
+    border: 2px solid black;
+    background-color: #EFEFEF;
+  }
+  .avisosup{
+    position: absolute;
+    transform: translate(-38.7%, -232px);
+    top: 50%;
+    left: 50%;
+    width: 1060px;
+    height: 40px;
+    border-radius: 5px;
+    border: 2px solid black;
+    background-color: #C0E3FD;
+  }
+  #guardarMensaje {
+    background-color: #4CAF50; /* Color de fondo verde */
+    border: 5px solid black; /* Sin borde */
+    color: white; /* Texto en color blanco */
+    padding: 10px 15px; /* Espaciado interno del botón */
+    text-align: center; /* Alineación del texto */
+    text-decoration: none; /* Sin decoración de texto */
+    display: inline-block; /* Hace que el botón se comporte como un elemento en línea */
+    font-size: 16px; /* Tamaño de fuente */
+    margin: 4px 2px; /* Margen exterior del botón */
+    cursor: pointer; /* Cursor estilo puntero */
+    border-radius: 5px; /* Borde redondeado */
+  }
+  
+  /* Estilo para los iframes */
+  .avisoframe, .avisosup {
+    border: 2px solid black; /* Borde sólido negro */
+  }

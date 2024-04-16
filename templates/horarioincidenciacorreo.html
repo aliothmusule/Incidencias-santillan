@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Notificación de Incidencias</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/horarios.css') }}">
+    <style>
+        .container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap; /* Permite que las columnas se ajusten en pantallas más pequeñas */
+        }
+        .column {
+            flex: 0 0 30%; /* Cada columna tomará hasta 30% del contenedor, ajusta según tu diseño */
+            margin: 10px; /* Espacio entre las columnas */
+        }
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        textarea,
+        .Table input[type="text"] {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box; /* Asegura que el padding no afecte el ancho total */
+        }
+        textarea {
+            resize: vertical; /* Permite que el usuario cambie la altura del textarea */
+        }
+        .btn-agregar {
+            background-color: #4CAF50; /* Verde */
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+            width: 100%; /* Ajusta el ancho del botón para que coincida con los inputs */
+        }
+        .btn-agregar:hover {
+            background-color: #45a049;
+        }
+        #boton-hecho:hover {
+            background-color: #0b7878;
+        }
+        #boton-hecho {
+            background-color: #0b7878;
+            margin-top:20px;
+        }
+        .table-container {
+            width: 100%;
+            margin-top: 20px;
+        }
+        .Table {
+            width: 100%;
+            margin-top: 10px; /* Espacio entre el botón y la tabla */
+        }
+        .Table td {
+            padding: 5px; /* Ajusta el padding de las celdas para alinear con los inputs */
+        }
+    </style>
+</head>
+<body class="rectangle" data-header-image="{{ url_for('static', filename='img/machiote.png') }}" data-footer-image="{{ url_for('static', filename='img/piedepagina.png') }}">
+    
+    <div class="inner-rectangle">
+        <p class="inner-text">Notificación de Incidencias</p>
+    </div>
+    <div style="padding: 5px; margin-left: 1%; margin-right: 1%; height: 480px; overflow: auto;">
+   
+        <div class="form-group">
+            <label style="margin-left: 1%; margin-right: 1%;" for="correoElectronico">Correo electrónico:</label>
+            <input style="padding: 5px; margin-left: 1%; margin-right: 1%;" type="email" id="correoElectronico" name="correoElectronico" required>
+        </div>
+
+     <!-- Contenedor principal -->
+     <div class="container">
+        <!-- Primera columna (Asunto e Introducción) -->
+        <div class="column">
+            <div class="form-group">
+                <label for="asunto">Asunto:</label>
+                <input type="text" id="asunto" name="asunto" required>
+            </div>
+            <div class="form-group">
+                <label for="introduccion">Introducción o Descripción:</label>
+                <textarea id="introduccion" name="introduccion" rows="3" required></textarea>
+            </div>
+        </div>
+
+        <!-- Segunda columna (Nombre del empleado y Descripción final) -->
+        <div class="column">
+            <div class="form-group">
+                <label for="nombreEmpleado">Nombre del Empleado:</label>
+                <input type="text" id="nombreEmpleado" name="nombreEmpleado" required>
+            </div>
+            <div class="form-group">
+                <label for="descripcionFinal">Descripción Final:</label>
+                <textarea id="descripcionFinal" name="descripcionFinal" rows="3" required></textarea>
+            </div>
+        </div>
+
+        <!-- Tercera columna (Período y Atentamente) -->
+        <div class="column">
+            <div class="form-group">
+                <label for="periodo">Período:</label>
+                <input type="text" id="periodo" name="periodo" required>
+            </div>
+            <div class="form-group">
+                <label for="atentamente">Atentamente:</label>
+                <input type="text" id="atentamente" name="atentamente" required>
+            </div>
+            <!-- Campo de firma opcional -->
+            <div class="form-group">
+                <label for="firma">Firma (opcional):</label>
+                <input type="file" id="firma" name="firma" accept="image/*" onchange="previewFirma()">
+                <img id="preview-firma" src="#" alt="Vista previa de la firma" style="display: none; width: 150px; height: 150px;">
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <button type="button" class="btn-agregar" onclick="agregarFila()">Agregar Incidencia</button>
+        <table class="Table">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Fecha</th>
+                    <th>Nombre</th>
+                    <th>Hora</th>
+                    <th>Incidencia</th>
+                </tr>
+            </thead>
+            <tbody id="tbodyIncidencias">
+                <!-- Las filas se añadirán aquí dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+    <button class="btn-pequeño" id="boton-hecho" onclick="hecho()">Hecho</button> 
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    
+    <script>
+        let contadorFilas = 0;
+        let firmaBase64 = null; // Para almacenar la firma convertida a base64
+        
+        function agregarFila() {
+            contadorFilas++;
+            const tbody = document.getElementById('tbodyIncidencias');
+            const nuevaFila = tbody.insertRow();
+            const celdaNumero = nuevaFila.insertCell(0);
+            const celdaFecha = nuevaFila.insertCell(1);
+            const celdaNombre = nuevaFila.insertCell(2);
+            const celdaHora = nuevaFila.insertCell(3);
+            const celdaIncidencia = nuevaFila.insertCell(4);
+        
+            celdaNumero.textContent = contadorFilas;
+            celdaFecha.innerHTML = '<input type="date" name="fecha[]">';
+            celdaNombre.innerHTML = '<input type="text" name="nombre[]">';
+            celdaHora.innerHTML = '<input type="time" name="hora[]">';
+            celdaIncidencia.innerHTML = '<input type="text" name="incidencia[]">';
+        }
+        
+        function previewFirma() {
+            const input = document.getElementById('firma');
+            const preview = document.getElementById('preview-firma');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    firmaBase64 = e.target.result; // Guarda la firma en formato base64
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        async function hecho() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+        
+                // Obtener las rutas de las imágenes del elemento body
+                const headerImageUrl = document.body.getAttribute('data-header-image');
+                const footerImageUrl = document.body.getAttribute('data-footer-image');
+        
+                // Cargar imágenes dinámicamente
+                const headerImgData = await loadImageAsBase64(headerImageUrl);
+                const footerImgData = await loadImageAsBase64(footerImageUrl);
+        
+                // Función para agregar el encabezado y el pie de página
+                const addHeaderFooter = () => {
+                    // Encabezado
+                    if (headerImgData) {
+                        doc.addImage(headerImgData, 'PNG', 10, 10, 190, 30);
+                    }
+                    // Pie de página
+                    if (footerImgData) {
+                        doc.addImage(footerImgData, 'PNG', 10, 250, 190, 30);
+                    }
+                };
+        
+                // Agregar encabezado y pie de página en cada página
+                doc.autoTable({
+                    didDrawPage: addHeaderFooter,
+                    margin: { top: 72,bottom:72,left:20,right:20 },
+                    startY: 60,
+                    head: [['N°', 'Fecha', 'Nombre', 'Hora', 'Incidencia']],
+                    body: Array.from(document.getElementById('tbodyIncidencias').rows).map((row, index) => ([
+                        index + 1,
+                        row.cells[1].querySelector('input').value,
+                        row.cells[2].querySelector('input').value,
+                        row.cells[3].querySelector('input').value,
+                        row.cells[4].querySelector('input').value
+                    ])),
+                });
+        
+                // Obtener el valor de cada campo del formulario
+                const correoElectronico = document.getElementById('correoElectronico').value;
+                const asunto = document.getElementById('asunto').value;
+                const introduccion = document.getElementById('introduccion').value;
+                const nombreEmpleado = document.getElementById('nombreEmpleado').value;
+                const descripcionFinal = document.getElementById('descripcionFinal').value;
+                const periodo = document.getElementById('periodo').value;
+                const atentamente = document.getElementById('atentamente').value;
+        
+                // Calcular el espacio que ocuparán los campos del formulario
+                const textWidth = 170; // Ancho del texto
+                const lineHeight = 10; // Altura de línea
+                const textPadding = 5; // Relleno del texto
+                const formDataHeight = lineHeight * 7 + textPadding * 6; // Altura total del texto
+        
+                // Agregar el texto de correo electrónico al principio del documento PDF
+                doc.text(`Asunto: ${asunto}`, 20, 40);
+                doc.text(`Introducción: ${introduccion}`, 20, 50); // Aquí cambiamos la posición del texto de introducción
+                
+                // Validar si hay suficiente espacio para agregar el formulario
+                if (doc.lastAutoTable.finalY + formDataHeight + 50 < doc.internal.pageSize.height) {
+                    doc.text(`Correo electrónico: ${correoElectronico}`, 20, doc.lastAutoTable.finalY + textPadding);
+                    doc.text(`Nombre del Empleado: ${nombreEmpleado}`, 20, doc.lastAutoTable.finalY + lineHeight + textPadding);
+                    doc.text(`Descripción Final: ${descripcionFinal}`, 20, doc.lastAutoTable.finalY + lineHeight * 2 + textPadding);
+                    doc.text(`Período: ${periodo}`, 20, doc.lastAutoTable.finalY + lineHeight * 3 + textPadding);
+                    doc.text(`Atentamente: ${atentamente}`, 20, doc.lastAutoTable.finalY + lineHeight * 4 + textPadding);
+        
+                    // Agregar la firma si está presente
+                    if (firmaBase64) {
+                        let y = doc.lastAutoTable.finalY + lineHeight * 5 + textPadding * 5;
+                        doc.addImage(firmaBase64, 'PNG', 15, y, 40, 30);
+                    }
+        
+                    doc.save('Notificacion_de_Incidencias.pdf');
+                } else {
+                    alert('El formulario no cabe en la página. Por favor, reduce la cantidad de texto o elimina algunos elementos.');
+                }
+            } catch (error) {
+                console.error("Se produjo un error al generar el PDF: ", error);
+                alert("Hubo un problema al generar el PDF. Por favor, inténtelo de nuevo.");
+            }
+        }
+        
+        
+        // Función para cargar una imagen y convertirla a base64
+        function loadImageAsBase64(url) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function() {
+                    const reader = new FileReader();
+                    reader.onloadend = function() {
+                        resolve(reader.result);
+                    };
+                    reader.readAsDataURL(xhr.response);
+                };
+                xhr.onerror = reject;
+                xhr.open('GET', url);
+                xhr.responseType = 'blob';
+                xhr.send();
+            });
+        }
+    </script>
+</body>
+</html>
