@@ -9,6 +9,7 @@
             display: flex;
             justify-content: space-between;
             flex-wrap: wrap; /* Permite que las columnas se ajusten en pantallas más pequeñas */
+            
         }
         .column {
             flex: 0 0 30%; /* Cada columna tomará hasta 30% del contenedor, ajusta según tu diseño */
@@ -34,6 +35,9 @@
         textarea {
             resize: vertical; /* Permite que el usuario cambie la altura del textarea */
         }
+        .hover-effect:hover {
+        background-color: red; /* Color rojo al hacer hover */
+    }
         .btn-agregar {
             background-color: #4CAF50; /* Verde */
             color: white;
@@ -50,10 +54,18 @@
         }
         #boton-hecho:hover {
             background-color: #0b7878;
+          
         }
         #boton-hecho {
             background-color: #0b7878;
             margin-top:20px;
+        }
+        #boton-correo {
+            background-color: #4CAF50;
+            margin-top: 20px;
+        }
+        .btn-agregar:hover {
+            background-color: #45a049;
         }
         .table-container {
             width: 100%;
@@ -66,6 +78,7 @@
         .Table td {
             padding: 5px; /* Ajusta el padding de las celdas para alinear con los inputs */
         }
+       
     </style>
 </head>
 <body class="rectangle" data-header-image="{{ url_for('static', filename='img/machiote.png') }}" data-footer-image="{{ url_for('static', filename='img/piedepagina.png') }}">
@@ -75,10 +88,7 @@
     </div>
     <div style="padding: 5px; margin-left: 1%; margin-right: 1%; height: 480px; overflow: auto;">
    
-        <div class="form-group">
-            <label style="margin-left: 1%; margin-right: 1%;" for="correoElectronico">Correo electrónico:</label>
-            <input style="padding: 5px; margin-left: 1%; margin-right: 1%;" type="email" id="correoElectronico" name="correoElectronico" required>
-        </div>
+        
 
      <!-- Contenedor principal -->
      <div class="container">
@@ -89,8 +99,8 @@
                 <input type="text" id="asunto" name="asunto" required>
             </div>
             <div class="form-group">
-                <label for="introduccion">Introducción o Descripción:</label>
-                <textarea id="introduccion" name="introduccion" rows="3" required></textarea>
+                <label style=" margin-left: 1%; margin-right: 1%;" for="correoElectronico">Correo electrónico:</label>
+                <input  style="padding: 5px; margin-left: 1%; margin-right: 1%;" type="email" id="correoElectronico" name="correoElectronico" required>
             </div>
         </div>
 
@@ -100,10 +110,7 @@
                 <label for="nombreEmpleado">Nombre del Empleado:</label>
                 <input type="text" id="nombreEmpleado" name="nombreEmpleado" required>
             </div>
-            <div class="form-group">
-                <label for="descripcionFinal">Descripción Final:</label>
-                <textarea id="descripcionFinal" name="descripcionFinal" rows="3" required></textarea>
-            </div>
+            
         </div>
 
         <!-- Tercera columna (Período y Atentamente) -->
@@ -111,10 +118,6 @@
             <div class="form-group">
                 <label for="periodo">Período:</label>
                 <input type="text" id="periodo" name="periodo" required>
-            </div>
-            <div class="form-group">
-                <label for="atentamente">Atentamente:</label>
-                <input type="text" id="atentamente" name="atentamente" required>
             </div>
             <!-- Campo de firma opcional -->
             <div class="form-group">
@@ -142,17 +145,28 @@
             </tbody>
         </table>
     </div>
-    <button class="btn-pequeño" id="boton-hecho" onclick="hecho()">Hecho</button> 
+    <button class="btn-pequeño" id="boton-hecho" onclick="hecho()">Descargar PDF</button> 
+    <button class="btn-pequeño" id="boton-correo" onclick="enviarCorreo()">Enviar Correo</button>
+  
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
 
     
     <script>
-        let contadorFilas = 0;
         let firmaBase64 = null; // Para almacenar la firma convertida a base64
-        
+        let contadorFilas = 0;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            agregarFila(); // Agrega una fila cuando la página se carga
+        });
+    
         function agregarFila() {
+            if (contadorFilas >= 10) {
+                alert("No puedes agregar más de 10 incidencias.");
+                return;
+            }
+    
             contadorFilas++;
             const tbody = document.getElementById('tbodyIncidencias');
             const nuevaFila = tbody.insertRow();
@@ -161,13 +175,31 @@
             const celdaNombre = nuevaFila.insertCell(2);
             const celdaHora = nuevaFila.insertCell(3);
             const celdaIncidencia = nuevaFila.insertCell(4);
-        
+    
             celdaNumero.textContent = contadorFilas;
-            celdaFecha.innerHTML = '<input type="date" name="fecha[]">';
-            celdaNombre.innerHTML = '<input type="text" name="nombre[]">';
-            celdaHora.innerHTML = '<input type="time" name="hora[]">';
-            celdaIncidencia.innerHTML = '<input type="text" name="incidencia[]">';
+            celdaNumero.className = 'hover-effect';
+            celdaNumero.onclick = function() { eliminarFila(this.parentNode.rowIndex - 1); };
+    
+            celdaFecha.innerHTML = '<input type="date" name="fecha[]" >'; // Valor predeterminado
+            celdaNombre.innerHTML = '<input type="text" name="nombre[]">'; // Valor predeterminado
+            celdaHora.innerHTML = '<input type="time" name="hora[]" >'; // Valor predeterminado
+            celdaIncidencia.innerHTML = '<input type="text" name="incidencia[]" >'; // Valor predeterminado
         }
+    
+        function eliminarFila(rowIndex) {
+            document.getElementById('tbodyIncidencias').deleteRow(rowIndex);
+            contadorFilas--;
+            actualizarNumeracion();
+        }
+    
+        function actualizarNumeracion() {
+            const rows = document.querySelectorAll('#tbodyIncidencias tr td:first-child');
+            rows.forEach((td, index) => {
+                td.textContent = index + 1;
+            });
+        }
+
+        
         
         function previewFirma() {
             const input = document.getElementById('firma');
@@ -186,32 +218,47 @@
             try {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-        
-                // Obtener las rutas de las imágenes del elemento body
-                const headerImageUrl = document.body.getAttribute('data-header-image');
-                const footerImageUrl = document.body.getAttribute('data-footer-image');
+                doc.setFont("Arial");
+                doc.setFontSize(10);
         
                 // Cargar imágenes dinámicamente
+                const headerImageUrl = document.body.getAttribute('data-header-image');
+                const footerImageUrl = document.body.getAttribute('data-footer-image');
                 const headerImgData = await loadImageAsBase64(headerImageUrl);
                 const footerImgData = await loadImageAsBase64(footerImageUrl);
         
-                // Función para agregar el encabezado y el pie de página
-                const addHeaderFooter = () => {
-                    // Encabezado
-                    if (headerImgData) {
-                        doc.addImage(headerImgData, 'PNG', 10, 10, 190, 30);
-                    }
-                    // Pie de página
-                    if (footerImgData) {
-                        doc.addImage(footerImgData, 'PNG', 10, 250, 190, 30);
-                    }
-                };
+                // Agregar el encabezado y el pie de página en cada página
+                doc.addImage(headerImgData, 'PNG', 10, 10, 190, 30);
+                doc.addImage(footerImgData, 'PNG', 10, 250, 190, 30);
         
-                // Agregar encabezado y pie de página en cada página
+                // Información del formulario
+                const introduccion = "Por este medio le saludo cordialmente, asimismo conforme al Artículo 80º, del inciso a) y Artículo 25º Fracción II del Reglamento de las Condiciones Generales del Trabajo el Personal de la Secretaría de Educación Pública, le informo el reporte de asistencia, generado por el sistema de control y registro en el que se detectaron las siguientes incidencias:";
+                const asunto = document.getElementById('asunto').value;
+                const nombreEmpleado = document.getElementById('nombreEmpleado').value;
+                const descfinal= "De acuerdo a lo previsto en el Artículo 83º del Reglamento de las Condiciones Generales del Trabajo el Personal de la Secretaría de Educación Pública, cuenta con un término de 10 días hábiles contados a partir de la recepción de la presente notificación, para presentar el documento probatorio de la justificación de las incidencias antes descritas, de lo contrario será acreedor a lo dispuesto en el Artículo 80º.";
+                const periodo = document.getElementById('periodo').value;
+                
+                // Agregar texto al documento
+                const fechaActual = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+                doc.text(`San Juan Bautista Tuxtepec, Oaxaca a: ${fechaActual}`, 108, 40);
+                doc.text(`Asunto: ${asunto}`, 136, 50);
+                doc.text(` ${nombreEmpleado}`, 20, 55);
+                doc.text(`PRESENTE`, 20, 60);
+        
+                // Descripción o Introducción
+                const lines = doc.splitTextToSize(introduccion, 170);
+                let currentY = 65 + 5; // Agregar 5 puntos después de "PRESENTE"
+                doc.text(lines, 20, currentY);
+        
+                doc.text(`PERIODO:          ${periodo}`, 60, 85);
+        
+                // Posición inicial de la tabla después de "PERIODO" más 5 puntos de espacio
+                let tableStartY = currentY + 20;
+        
+                // Agregar la tabla
+                /*
                 doc.autoTable({
-                    didDrawPage: addHeaderFooter,
-                    margin: { top: 72,bottom:72,left:20,right:20 },
-                    startY: 60,
+                    startY: tableStartY,
                     head: [['N°', 'Fecha', 'Nombre', 'Hora', 'Incidencia']],
                     body: Array.from(document.getElementById('tbodyIncidencias').rows).map((row, index) => ([
                         index + 1,
@@ -220,50 +267,68 @@
                         row.cells[3].querySelector('input').value,
                         row.cells[4].querySelector('input').value
                     ])),
-                });
-        
-                // Obtener el valor de cada campo del formulario
-                const correoElectronico = document.getElementById('correoElectronico').value;
-                const asunto = document.getElementById('asunto').value;
-                const introduccion = document.getElementById('introduccion').value;
-                const nombreEmpleado = document.getElementById('nombreEmpleado').value;
-                const descripcionFinal = document.getElementById('descripcionFinal').value;
-                const periodo = document.getElementById('periodo').value;
-                const atentamente = document.getElementById('atentamente').value;
-        
-                // Calcular el espacio que ocuparán los campos del formulario
-                const textWidth = 170; // Ancho del texto
-                const lineHeight = 10; // Altura de línea
-                const textPadding = 5; // Relleno del texto
-                const formDataHeight = lineHeight * 7 + textPadding * 6; // Altura total del texto
-        
-                // Agregar el texto de correo electrónico al principio del documento PDF
-                doc.text(`Asunto: ${asunto}`, 20, 40);
-                doc.text(`Introducción: ${introduccion}`, 20, 50); // Aquí cambiamos la posición del texto de introducción
-                
-                // Validar si hay suficiente espacio para agregar el formulario
-                if (doc.lastAutoTable.finalY + formDataHeight + 50 < doc.internal.pageSize.height) {
-                    doc.text(`Correo electrónico: ${correoElectronico}`, 20, doc.lastAutoTable.finalY + textPadding);
-                    doc.text(`Nombre del Empleado: ${nombreEmpleado}`, 20, doc.lastAutoTable.finalY + lineHeight + textPadding);
-                    doc.text(`Descripción Final: ${descripcionFinal}`, 20, doc.lastAutoTable.finalY + lineHeight * 2 + textPadding);
-                    doc.text(`Período: ${periodo}`, 20, doc.lastAutoTable.finalY + lineHeight * 3 + textPadding);
-                    doc.text(`Atentamente: ${atentamente}`, 20, doc.lastAutoTable.finalY + lineHeight * 4 + textPadding);
-        
-                    // Agregar la firma si está presente
-                    if (firmaBase64) {
-                        let y = doc.lastAutoTable.finalY + lineHeight * 5 + textPadding * 5;
-                        doc.addImage(firmaBase64, 'PNG', 15, y, 40, 30);
+                });*/
+                doc.autoTable({
+                    startY: tableStartY,
+                    head: [['N°', 'Fecha', 'Nombre', 'Hora', 'Incidencia']],
+                    body: Array.from(document.getElementById('tbodyIncidencias').rows).map((row, index) => ([
+                        index + 1,
+                        row.cells[1].querySelector('input').value,
+                        row.cells[2].querySelector('input').value,
+                        row.cells[3].querySelector('input').value,
+                        row.cells[4].querySelector('input').value
+                    ])),
+                    headStyles: {
+                        fillColor: [255, 255, 255], // Fondo blanco para el encabezado
+                        textColor: [0, 0, 0], // Texto negro para el encabezado
+                        lineColor: [0, 0, 0], // Líneas negras para el encabezado
+                        lineWidth: 0.5 // Grosor de las líneas
+                    },
+                    bodyStyles: {
+                        fillColor: [255, 255, 255], // Fondo blanco para el cuerpo
+                        textColor: [0, 0, 0], // Texto negro para el cuerpo
+                        lineColor: [0, 0, 0], // Líneas negras para el cuerpo
+                        lineWidth: 0.5 // Grosor de las líneas
                     }
+                });
+                
         
-                    doc.save('Notificacion_de_Incidencias.pdf');
-                } else {
-                    alert('El formulario no cabe en la página. Por favor, reduce la cantidad de texto o elimina algunos elementos.');
+                // Añadir la firma, si está presente
+                if (firmaBase64) {
+                    let y = doc.lastAutoTable.finalY + 10;
+                    doc.addImage(firmaBase64, 'PNG', 15, y, 40, 30);
                 }
+                
+                const pageWidth = 210; // Ancho del documento A4 en mm
+        const leftMargin = 20; // Margen izquierdo en mm
+        const usableWidth = pageWidth - 2 * leftMargin; // Ancho utilizable
+
+        // Textos que queremos centrar
+        const atentamenteText = "ATENTAMENTE";
+        const recursosHumanosText = "Recursos Humanos";
+
+        // Calcular la posición X para centrar el texto
+        const atentamenteTextWidth = doc.getStringUnitWidth(atentamenteText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+        const recursosHumanosTextWidth = doc.getStringUnitWidth(recursosHumanosText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+
+        const atentamenteX = (pageWidth - atentamenteTextWidth) / 2; // X position for centered text
+        const recursosHumanosX = (pageWidth - recursosHumanosTextWidth) / 2; // X position for centered text
+
+        const lines1 = doc.splitTextToSize(descfinal, 170);
+         doc.text(lines1, 20, 180);
+
+        doc.text(atentamenteText, atentamenteX, 240);
+        doc.text(recursosHumanosText, recursosHumanosX, 245);
+
+        
+                // Guardar el PDF
+                doc.save('Notificacion_de_Incidencias.pdf');
             } catch (error) {
-                console.error("Se produjo un error al generar el PDF: ", error);
+                console.error("Error al generar el PDF: ", error);
                 alert("Hubo un problema al generar el PDF. Por favor, inténtelo de nuevo.");
             }
         }
+        
         
         
         // Función para cargar una imagen y convertirla a base64
@@ -283,6 +348,131 @@
                 xhr.send();
             });
         }
-    </script>
+        </script>
+        <script>
+            async function enviarCorreo() {
+                try {
+                    // Obtener el valor del asunto
+                    const asunto = document.getElementById('asunto').value;
+            
+                    // Generar el PDF
+                    const pdfData = await generarPDF();
+            
+                    // Crear un objeto Blob con los datos del PDF
+                    const pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
+            
+                    // Crear un objeto URL para el PDF
+                    const pdfUrl = URL.createObjectURL(pdfBlob);
+            
+                    // Construir el enlace 'mailto' con el asunto y el PDF adjunto
+                    const mailtoLink = `mailto:?subject=${encodeURIComponent(asunto)}&body=Adjunto%20encontrarás%20la%20notificación%20de%20incidencias.&attach=${pdfUrl}`;
+            
+                    // Abrir el cliente de correo electrónico predeterminado
+                    window.open(mailtoLink);
+                } catch (error) {
+                    console.error("Error al generar el PDF y enviar el correo: ", error);
+                    alert("Hubo un problema al generar el PDF y enviar el correo. Por favor, inténtelo de nuevo.");
+                }
+            }
+            
+        
+            function generarPDF() {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        doc.setFont("Arial");
+                        doc.setFontSize(10);
+                        
+                        // Información del formulario
+                        const asunto = document.getElementById('asunto').value;
+                        const nombreEmpleado = document.getElementById('nombreEmpleado').value;
+                        const periodo = document.getElementById('periodo').value;
+                        const introduccion = "Por este medio le saludo cordialmente, asimismo conforme al Artículo 80º, del inciso a) y Artículo 25º Fracción II del Reglamento de las Condiciones Generales del Trabajo el Personal de la Secretaría de Educación Pública, le informo el reporte de asistencia, generado por el sistema de control y registro en el que se detectaron las siguientes incidencias:";
+                        const descfinal= "De acuerdo a lo previsto en el Artículo 83º del Reglamento de las Condiciones Generales del Trabajo el Personal de la Secretaría de Educación Pública, cuenta con un término de 10 días hábiles contados a partir de la recepción de la presente notificación, para presentar el documento probatorio de la justificación de las incidencias antes descritas, de lo contrario será acreedor a lo dispuesto en el Artículo 80º.";
+                        
+                        // Agregar texto al documento
+                        const fechaActual = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+                        doc.text(`San Juan Bautista Tuxtepec, Oaxaca a: ${fechaActual}`, 108, 40);
+                        doc.text(`Asunto: ${asunto}`, 136, 50);
+                        doc.text(` ${nombreEmpleado}`, 20, 55);
+                        doc.text(`PRESENTE`, 20, 60);
+                    
+                        // Descripción o Introducción
+                        const lines = doc.splitTextToSize(introduccion, 170);
+                        let currentY = 65 + 5; // Agregar 5 puntos después de "PRESENTE"
+                        doc.text(lines, 20, currentY);
+                    
+                        doc.text(`PERIODO:          ${periodo}`, 60, 85);
+                    
+                        // Posición inicial de la tabla después de "PERIODO" más 5 puntos de espacio
+                        let tableStartY = currentY + 20;
+                    
+                        // Agregar la tabla
+                        doc.autoTable({
+                            startY: tableStartY,
+                            head: [['N°', 'Fecha', 'Nombre', 'Hora', 'Incidencia']],
+                            body: Array.from(document.getElementById('tbodyIncidencias').rows).map((row, index) => ([
+                                index + 1,
+                                row.cells[1].querySelector('input').value,
+                                row.cells[2].querySelector('input').value,
+                                row.cells[3].querySelector('input').value,
+                                row.cells[4].querySelector('input').value
+                            ])),
+                            headStyles: {
+                                fillColor: [255, 255, 255], // Fondo blanco para el encabezado
+                                textColor: [0, 0, 0], // Texto negro para el encabezado
+                                lineColor: [0, 0, 0], // Líneas negras para el encabezado
+                                lineWidth: 0.5 // Grosor de las líneas
+                            },
+                            bodyStyles: {
+                                fillColor: [255, 255, 255], // Fondo blanco para el cuerpo
+                                textColor: [0, 0, 0], // Texto negro para el cuerpo
+                                lineColor: [0, 0, 0], // Líneas negras para el cuerpo
+                                lineWidth: 0.5 // Grosor de las líneas
+                            }
+                        });
+                        
+                    
+                        // Añadir la firma, si está presente
+                        if (firmaBase64) {
+                            let y = doc.lastAutoTable.finalY + 10;
+                            doc.addImage(firmaBase64, 'PNG', 15, y, 40, 30);
+                        }
+                        
+                        const pageWidth = 210; // Ancho del documento A4 en mm
+                        const leftMargin = 20; // Margen izquierdo en mm
+                        const usableWidth = pageWidth - 2 * leftMargin; // Ancho utilizable
+            
+                        // Textos que queremos centrar
+                        const atentamenteText = "ATENTAMENTE";
+                        const recursosHumanosText = "Recursos Humanos";
+            
+                        // Calcular la posición X para centrar el texto
+                        const atentamenteTextWidth = doc.getStringUnitWidth(atentamenteText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+                        const recursosHumanosTextWidth = doc.getStringUnitWidth(recursosHumanosText) * doc.internal.getFontSize() / doc.internal.scaleFactor;
+            
+                        const atentamenteX = (pageWidth - atentamenteTextWidth) / 2; // X position for centered text
+                        const recursosHumanosX = (pageWidth - recursosHumanosTextWidth) / 2; // X position for centered text
+            
+                        const lines1 = doc.splitTextToSize(descfinal, 170);
+                        doc.text(lines1, 20, 180);
+            
+                        doc.text(atentamenteText, atentamenteX, 240);
+                        doc.text(recursosHumanosText, recursosHumanosX, 245);
+                        
+                        // Generar el PDF y resolver la promesa
+                        resolve(doc.output('bloburl'));
+                    } catch (error) {
+                        // Rechazar la promesa en caso de error
+                        reject(error);
+                    }
+                });
+            }
+            
+        </script>
+        
+        
+
 </body>
 </html>
