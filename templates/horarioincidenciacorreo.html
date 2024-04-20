@@ -436,8 +436,8 @@
                     
                         // Añadir la firma, si está presente
                         if (firmaBase64) {
-                            let y = doc.lastAutoTable.finalY + 10;
-                            doc.addImage(firmaBase64, 'PNG', 15, y, 40, 30);
+                            let y = 205;
+                            doc.addImage(firmaBase64, 'PNG', 85, y, 40, 30);
                         }
                         
                         const pageWidth = 210; // Ancho del documento A4 en mm
